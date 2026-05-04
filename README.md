@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+# LearnWave 🌊
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App de comunicação educacional que conecta professores e alunos via chat, desenvolvido com React Native + Expo.
 
-## Get started
+---
 
-1. Install dependencies
+## Pré-requisitos
 
-   ```bash
-   npm install
-   ```
+Antes de rodar o projeto, certifique-se de ter instalado:
 
-2. Start the app
+- [Node.js](https://nodejs.org/) (versão 18 ou superior)
+- [Git](https://git-scm.com/)
+- Expo Go no celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779)) **ou** um emulador configurado
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Como rodar
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### 1. Clone o repositório
 
 ```bash
-npm run reset-project
+git clone <url-do-repositorio>
+cd LearnWave
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 2. Instale as dependências
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+### 3. Inicie o projeto
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start
+```
 
-## Join the community
+### 4. Abra no dispositivo
 
-Join our community of developers creating universal apps.
+Após iniciar, o terminal exibirá um QR Code. Escolha uma das opções:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+| Opção | Como abrir |
+|---|---|
+| 📱 Celular físico | Escaneie o QR Code com o app **Expo Go** |
+| 🤖 Android Emulator | Pressione `a` no terminal |
+| 🍎 iOS Simulator | Pressione `i` no terminal |
+| 🌐 Navegador (Web) | Pressione `w` no terminal |
+
+---
+
+## Fluxo do app
+
+```
+Tela Inicial
+├── Entrar → Login
+│   ├── Professor → Lista de alunos → Chat
+│   └── Aluno    → Lista de professores → Chat
+└── Sobre Nós
+```
+
+---
+
+## Estrutura de pastas
+
+```
+app/
+├── index.tsx           # Tela inicial
+├── login.tsx           # Login com seleção de perfil
+├── sobre.tsx           # Sobre Nós
+├── professor/
+│   └── chat.tsx        # Lista de alunos (perfil professor)
+├── aluno/
+│   └── chat.tsx        # Lista de professores (perfil aluno)
+└── chat/
+    └── [id].tsx        # Conversa individual
+constants/
+├── theme.ts            # Paleta de cores e tokens de design
+└── mock-data.ts        # Dados de exemplo
+```
+
+---
+
+## Tecnologias
+
+- [Expo](https://expo.dev) ~54
+- [React Native](https://reactnative.dev) 0.81
+- [Expo Router](https://docs.expo.dev/router/introduction/) — navegação baseada em arquivos
+- TypeScript
+
+---
+
+Desenvolvido pela turma **INF3BM — 2025**
