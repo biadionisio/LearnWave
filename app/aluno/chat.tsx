@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View, FlatList } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, FlatList, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Clay } from '@/constants/theme';
 import { conversations } from '@/constants/mock-data';
 
@@ -17,10 +18,7 @@ export default function AlunoChatScreen() {
           <Text style={styles.headerTitle}>Meus Professores</Text>
           <Text style={styles.headerSub}>{professores.length} conversas</Text>
         </View>
-        <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() => router.replace('/')}
-        >
+        <TouchableOpacity style={styles.logoutBtn} onPress={() => router.replace('/')}>
           <Text style={styles.logoutText}>Sair</Text>
         </TouchableOpacity>
       </View>
@@ -46,6 +44,21 @@ export default function AlunoChatScreen() {
           </TouchableOpacity>
         )}
       />
+
+      {/* Bottom tab bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={[styles.tabItem, styles.tabItemActive]}>
+          <Ionicons name="chatbubbles" size={22} color={Colors.accent} />
+          <Text style={[styles.tabLabel, styles.tabLabelActive]}>Chat</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.tabItem}
+          onPress={() => router.push('/perfil?role=aluno')}
+        >
+          <Ionicons name="person-outline" size={22} color={Colors.text.muted} />
+          <Text style={styles.tabLabel}>Perfil</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -99,6 +112,7 @@ const styles = StyleSheet.create({
   list: {
     padding: 24,
     gap: 12,
+    paddingBottom: 16,
   },
   card: {
     flexDirection: 'row',
@@ -136,5 +150,40 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 24,
     color: Colors.text.muted,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: Colors.purple.mid + '30',
+    backgroundColor: Colors.surface.overlay,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 32 : 18,
+    gap: 10,
+  },
+  tabItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    backgroundColor: Colors.surface.input,
+    borderRadius: Clay.radius.md,
+    paddingVertical: 11,
+    borderWidth: 1,
+    borderColor: Colors.blue.mid + '50',
+  },
+  tabItemActive: {
+    backgroundColor: Colors.purple.dark,
+    borderColor: Colors.accent + '80',
+  },
+  tabLabel: {
+    fontSize: 13,
+    color: Colors.text.muted,
+    fontWeight: '600',
+  },
+  tabLabelActive: {
+    color: Colors.accent,
+    fontWeight: '700',
   },
 });

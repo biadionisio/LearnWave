@@ -4,6 +4,7 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity,
   View, FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Clay } from '@/constants/theme';
 import { conversations, Message } from '@/constants/mock-data';
 
@@ -35,12 +36,10 @@ export default function ChatScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
     >
-      <View style={styles.blobTop} />
-
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>←</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={22} color={Colors.text.secondary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerAvatar}>{conv?.avatar}</Text>
@@ -72,7 +71,7 @@ export default function ChatScreen() {
       <View style={styles.inputBar}>
         <TextInput
           style={styles.input}
-          placeholder="Digite uma mensagem..."
+          placeholder="Mensagem..."
           placeholderTextColor={Colors.text.muted}
           value={text}
           onChangeText={setText}
@@ -83,7 +82,7 @@ export default function ChatScreen() {
           onPress={sendMessage}
           activeOpacity={0.85}
         >
-          <Text style={styles.sendIcon}>➤</Text>
+          <Ionicons name="send" size={16} color={Colors.text.primary} />
         </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
@@ -95,76 +94,65 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface.overlay,
   },
-  blobTop: {
-    position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: Colors.purple.dark,
-    opacity: 0.4,
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 56,
-    paddingBottom: 16,
-    gap: 16,
+    paddingHorizontal: 12,
+    paddingTop: 48,
+    paddingBottom: 10,
+    gap: 8,
     borderBottomWidth: 1,
     borderBottomColor: Colors.purple.mid + '30',
   },
-  backText: {
-    fontSize: 26,
-    color: Colors.text.secondary,
+  backBtn: {
+    padding: 4,
   },
   headerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  headerAvatar: { fontSize: 28 },
+  headerAvatar: { fontSize: 22 },
   headerName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: Colors.text.primary,
   },
   messageList: {
-    padding: 16,
-    gap: 10,
+    padding: 12,
+    gap: 6,
     flexGrow: 1,
     justifyContent: 'flex-end',
   },
   bubbleWrapper: {
     flexDirection: 'row',
-    marginVertical: 2,
+    marginVertical: 1,
   },
   bubbleLeft: { justifyContent: 'flex-start' },
   bubbleRight: { justifyContent: 'flex-end' },
   bubble: {
-    maxWidth: '75%',
+    maxWidth: '78%',
     borderRadius: Clay.radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     ...Clay.shadowSm,
-    gap: 4,
+    gap: 2,
   },
   bubbleMe: {
     backgroundColor: Colors.purple.mid,
     borderWidth: 1,
     borderColor: Colors.purple.light + '60',
-    borderBottomRightRadius: 6,
+    borderBottomRightRadius: 4,
   },
   bubbleThem: {
     backgroundColor: Colors.surface.card,
     borderWidth: 1,
     borderColor: Colors.blue.mid + '50',
-    borderBottomLeftRadius: 6,
+    borderBottomLeftRadius: 4,
   },
   bubbleText: {
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 14,
+    lineHeight: 19,
   },
   bubbleTextMe: { color: Colors.text.primary },
   bubbleTextThem: { color: Colors.text.secondary },
@@ -176,8 +164,10 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 16,
-    gap: 10,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
+    gap: 8,
     borderTopWidth: 1,
     borderTopColor: Colors.purple.mid + '30',
     backgroundColor: Colors.surface.overlay,
@@ -186,18 +176,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface.input,
     borderRadius: Clay.radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     color: Colors.text.primary,
-    fontSize: 15,
+    fontSize: 14,
     borderWidth: 1,
     borderColor: Colors.blue.mid + '50',
-    maxHeight: 100,
+    maxHeight: 90,
   },
   sendBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.purple.mid,
     justifyContent: 'center',
     alignItems: 'center',
@@ -206,8 +196,4 @@ const styles = StyleSheet.create({
     ...Clay.shadowSm,
   },
   sendBtnDisabled: { opacity: 0.4 },
-  sendIcon: {
-    color: Colors.text.primary,
-    fontSize: 18,
-  },
 });

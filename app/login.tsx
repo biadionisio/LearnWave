@@ -4,6 +4,7 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity,
   View, Dimensions, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Clay } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
@@ -49,7 +50,11 @@ export default function LoginScreen() {
               onPress={() => setRole('professor')}
               activeOpacity={0.85}
             >
-              <Text style={styles.roleEmoji}>👨‍🏫</Text>
+              <Ionicons
+                name="school-outline"
+                size={26}
+                color={role === 'professor' ? Colors.accent : Colors.text.secondary}
+              />
               <Text style={[styles.roleText, role === 'professor' && styles.roleTextActive]}>
                 Professor
               </Text>
@@ -60,7 +65,11 @@ export default function LoginScreen() {
               onPress={() => setRole('aluno')}
               activeOpacity={0.85}
             >
-              <Text style={styles.roleEmoji}>🎓</Text>
+              <Ionicons
+                name="person-outline"
+                size={26}
+                color={role === 'aluno' ? Colors.accent : Colors.text.secondary}
+              />
               <Text style={[styles.roleText, role === 'aluno' && styles.roleTextActive]}>
                 Aluno
               </Text>
@@ -174,7 +183,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.surface.input,
     borderRadius: Clay.radius.md,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'transparent',
@@ -184,9 +193,6 @@ const styles = StyleSheet.create({
   roleBtnActive: {
     borderColor: Colors.accent,
     backgroundColor: Colors.purple.dark,
-  },
-  roleEmoji: {
-    fontSize: 28,
   },
   roleText: {
     color: Colors.text.secondary,

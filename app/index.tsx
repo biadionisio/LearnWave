@@ -16,7 +16,9 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {/* Logo card */}
         <View style={styles.logoCard}>
-          <Text style={styles.logoEmoji}>🌊</Text>
+          <View style={styles.logoBadge}>
+            <Text style={styles.logoBadgeText}>LW</Text>
+          </View>
           <Text style={styles.logoTitle}>LearnWave</Text>
           <Text style={styles.logoSubtitle}>Conectando professores e alunos</Text>
         </View>
@@ -86,9 +88,23 @@ const styles = StyleSheet.create({
     borderColor: Colors.purple.mid + '60',
     ...Clay.shadow,
   },
-  logoEmoji: {
-    fontSize: 64,
+  logoBadge: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: Colors.purple.mid,
+    borderWidth: 2,
+    borderColor: Colors.purple.light,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 12,
+    ...Clay.shadow,
+  },
+  logoBadgeText: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: Colors.text.primary,
+    letterSpacing: 2,
   },
   logoTitle: {
     fontSize: 36,
