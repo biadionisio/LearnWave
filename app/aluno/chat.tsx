@@ -34,7 +34,7 @@ export default function AlunoChatScreen() {
             activeOpacity={0.85}
           >
             <View style={styles.avatar}>
-              <Text style={styles.avatarEmoji}>{item.avatar}</Text>
+              <Text style={styles.avatarText}>{item.avatar}</Text>
             </View>
             <View style={styles.info}>
               <Text style={styles.name}>{item.name}</Text>
@@ -135,7 +135,11 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: Colors.blue.mid + '60',
   },
-  avatarEmoji: { fontSize: 26 },
+  avatarText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
   info: { flex: 1 },
   name: {
     fontSize: 16,

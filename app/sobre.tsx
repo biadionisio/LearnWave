@@ -1,6 +1,6 @@
+import { Clay, Colors } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView, Dimensions } from 'react-native';
-import { Colors, Clay } from '@/constants/theme';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -18,7 +18,9 @@ export default function SobreScreen() {
         </TouchableOpacity>
 
         <View style={styles.heroCard}>
-          <Text style={styles.emoji}>🌊</Text>
+          <View style={styles.logoBadge}>
+            <Text style={styles.logoBadgeText}>LW</Text>
+          </View>
           <Text style={styles.heroTitle}>LearnWave</Text>
           <Text style={styles.heroSub}>Versão 1.0.0</Text>
         </View>
@@ -26,21 +28,20 @@ export default function SobreScreen() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Nossa Missão</Text>
           <Text style={styles.cardText}>
-            O LearnWave é uma plataforma de comunicação educacional que conecta professores e alunos
-            de forma simples, rápida e eficiente. Acreditamos que a comunicação é a base do
-            aprendizado.
+            O LearnWave é uma plataforma educacional que conecta professores e alunos
+            de forma simples e eficiente. Acreditamos que a comunicação é a base do aprendizado.
           </Text>
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Como funciona</Text>
           {[
-            { icon: '👨🏫', text: 'Professores enviam mensagens e materiais para seus alunos' },
-            { icon: '🎓', text: 'Alunos recebem e respondem diretamente aos professores' },
-            { icon: '💬', text: 'Chat em tempo real para uma comunicação fluida' },
+            { text: 'Professores enviam mensagens e materiais para seus alunos' },
+            { text: 'Alunos recebem e respondem diretamente aos professores' },
+            { text: 'Chat em tempo real para uma comunicação fluida' },
           ].map((item, i) => (
             <View key={i} style={styles.featureRow}>
-              <Text style={styles.featureEmoji}>{item.icon}</Text>
+              <View style={styles.featureDot} />
               <Text style={styles.featureText}>{item.text}</Text>
             </View>
           ))}
@@ -48,7 +49,7 @@ export default function SobreScreen() {
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Desenvolvido por</Text>
-          <Text style={styles.cardText}>Turma INF3BM — 2025</Text>
+          <Text style={styles.cardText}>LearnWave-2026</Text>
         </View>
       </ScrollView>
     </View>
@@ -105,7 +106,21 @@ const styles = StyleSheet.create({
     ...Clay.shadow,
     gap: 8,
   },
-  emoji: { fontSize: 56 },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: Colors.purple.mid,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  logoBadgeText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: Colors.text.primary,
+    letterSpacing: 1,
+  },
   heroTitle: {
     fontSize: 32,
     fontWeight: '800',
@@ -140,7 +155,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 12,
   },
-  featureEmoji: { fontSize: 20 },
+  featureDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.accent,
+    marginTop: 7,
+  },
   featureText: {
     flex: 1,
     fontSize: 14,

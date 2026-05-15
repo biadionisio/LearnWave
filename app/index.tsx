@@ -116,7 +116,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.text.secondary,
     marginTop: 8,
-    textAlign: 'center',
+    textAlign: 'left',
+    letterSpacing: 0.3,
   },
   buttons: {
     width: '100%',

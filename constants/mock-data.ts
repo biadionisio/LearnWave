@@ -19,7 +19,7 @@ export const conversations: Conversation[] = [
     id: '1',
     name: 'Prof. Carlos Silva',
     role: 'professor',
-    avatar: '👨🏫',
+    avatar: 'CS',
     lastMessage: 'Não esqueçam da prova amanhã!',
     messages: [
       { id: 'm1', from: 'professor', text: 'Olá turma! Tudo bem?', time: '09:00' },
@@ -31,7 +31,7 @@ export const conversations: Conversation[] = [
     id: '2',
     name: 'Prof. Ana Souza',
     role: 'professor',
-    avatar: '👩🏫',
+    avatar: 'AS',
     lastMessage: 'Enviei o material no grupo.',
     messages: [
       { id: 'm1', from: 'professor', text: 'Bom dia! Enviei o material no grupo.', time: '08:30' },
@@ -42,7 +42,7 @@ export const conversations: Conversation[] = [
     id: '3',
     name: 'João Aluno',
     role: 'aluno',
-    avatar: '🎓',
+    avatar: 'JA',
     lastMessage: 'Professor, tenho uma dúvida.',
     messages: [
       { id: 'm1', from: 'aluno', text: 'Professor, tenho uma dúvida sobre o exercício 3.', time: '14:00' },
@@ -53,7 +53,7 @@ export const conversations: Conversation[] = [
     id: '4',
     name: 'Maria Aluna',
     role: 'aluno',
-    avatar: '📚',
+    avatar: 'MA',
     lastMessage: 'Entendi, obrigada!',
     messages: [
       { id: 'm1', from: 'aluno', text: 'Professora, quando é a entrega do trabalho?', time: '10:00' },

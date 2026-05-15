@@ -42,7 +42,9 @@ export default function ChatScreen() {
           <Ionicons name="chevron-back" size={22} color={Colors.text.secondary} />
         </TouchableOpacity>
         <View style={styles.headerInfo}>
-          <Text style={styles.headerAvatar}>{conv?.avatar}</Text>
+          <View style={styles.headerAvatar}>
+            <Text style={styles.headerAvatarText}>{conv?.avatar}</Text>
+          </View>
           <Text style={styles.headerName}>{conv?.name}</Text>
         </View>
       </View>
@@ -112,7 +114,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  headerAvatar: { fontSize: 22 },
+  headerAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.purple.mid,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerAvatarText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
   headerName: {
     fontSize: 16,
     fontWeight: '700',

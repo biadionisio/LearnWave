@@ -2,20 +2,31 @@ import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   StyleSheet, Text, TextInput, TouchableOpacity,
-  View, ScrollView, KeyboardAvoidingView, Platform,
+  View, ScrollView, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Clay } from '@/constants/theme';
-
-const AVATARS = ['🧑', '👩', '👨', '🧒', '👧', '👦', '🧑‍💻', '👩‍🏫', '👨‍🏫', '🧑‍🎓', '👩‍🎓', '👨‍🎓'];
 
 export default function PerfilScreen() {
   const router = useRouter();
   const { role } = useLocalSearchParams<{ role: 'professor' | 'aluno' }>();
 
   const [nome, setNome] = useState('');
-  const [avatar, setAvatar] = useState('🧑');
+  const [photo, setPhoto] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+
+  async function pickImage() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) setPhoto(result.assets[0].uri);
+  }
 
   function handleSave() {
     setSaved(true);
@@ -23,6 +34,7 @@ export default function PerfilScreen() {
   }
 
   const backRoute = role === 'professor' ? '/professor/chat' : '/aluno/chat';
+  const initials = nome.trim() ? nome.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?';
 
   return (
     <KeyboardAvoidingView
@@ -32,7 +44,6 @@ export default function PerfilScreen() {
       <View style={styles.blobTop} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.replace(backRoute)} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={22} color={Colors.text.secondary} />
@@ -41,31 +52,22 @@ export default function PerfilScreen() {
           <View style={{ width: 30 }} />
         </View>
 
-        {/* Avatar preview */}
-        <View style={styles.avatarPreview}>
-          <Text style={styles.avatarPreviewEmoji}>{avatar}</Text>
-        </View>
-
-        {/* Avatar picker */}
-        <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Escolha seu avatar</Text>
-          <View style={styles.avatarGrid}>
-            {AVATARS.map((a) => (
-              <TouchableOpacity
-                key={a}
-                style={[styles.avatarOption, avatar === a && styles.avatarOptionActive]}
-                onPress={() => setAvatar(a)}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.avatarOptionEmoji}>{a}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Avatar */}
+        <TouchableOpacity style={styles.avatarPreview} onPress={pickImage} activeOpacity={0.8}>
+          {photo ? (
+            <Image source={{ uri: photo }} style={styles.avatarImage} />
+          ) : (
+            <Text style={styles.avatarInitials}>{initials}</Text>
+          )}
+          <View style={styles.cameraOverlay}>
+            <Ionicons name="camera" size={16} color={Colors.text.primary} />
           </View>
-        </View>
+        </TouchableOpacity>
+        <Text style={styles.photoHint}>Toque para alterar a foto</Text>
 
         {/* Nome */}
         <View style={styles.card}>
-          <Text style={styles.sectionLabel}>Nome de exibição</Text>
+          <Text style={styles.sectionLabel}>Nome de exibicao</Text>
           <TextInput
             style={styles.input}
             placeholder="Seu nome..."
@@ -76,22 +78,16 @@ export default function PerfilScreen() {
           />
         </View>
 
-        {/* Save button */}
         <TouchableOpacity
           style={[styles.saveBtn, saved && styles.saveBtnSuccess]}
           onPress={handleSave}
           activeOpacity={0.85}
         >
-          <Ionicons
-            name={saved ? 'checkmark' : 'save-outline'}
-            size={18}
-            color={Colors.text.primary}
-          />
-          <Text style={styles.saveBtnText}>{saved ? 'Salvo!' : 'Salvar alterações'}</Text>
+          <Ionicons name={saved ? 'checkmark' : 'save-outline'} size={18} color={Colors.text.primary} />
+          <Text style={styles.saveBtnText}>{saved ? 'Salvo!' : 'Salvar alteracoes'}</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Bottom tab bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tabItem} onPress={() => router.replace(backRoute)}>
           <Ionicons name="chatbubbles-outline" size={22} color={Colors.text.muted} />
@@ -125,6 +121,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 100,
     gap: 16,
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -132,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 40,
     marginBottom: 8,
+    width: '100%',
   },
   backBtn: { padding: 4 },
   headerTitle: {
@@ -140,10 +138,9 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
   },
   avatarPreview: {
-    alignSelf: 'center',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: Colors.surface.card,
     borderWidth: 2,
     borderColor: Colors.purple.mid,
@@ -151,8 +148,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...Clay.shadow,
   },
-  avatarPreviewEmoji: { fontSize: 48 },
+  avatarImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  avatarInitials: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: Colors.text.primary,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: Colors.purple.mid,
+    borderWidth: 2,
+    borderColor: Colors.surface.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoHint: {
+    fontSize: 12,
+    color: Colors.text.muted,
+    marginTop: -8,
+  },
   card: {
+    width: '100%',
     backgroundColor: Colors.surface.card,
     borderRadius: Clay.radius.lg,
     padding: 16,
@@ -167,26 +192,6 @@ const styles = StyleSheet.create({
     color: Colors.text.secondary,
     letterSpacing: 0.4,
   },
-  avatarGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  avatarOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.surface.input,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  avatarOptionActive: {
-    borderColor: Colors.accent,
-    backgroundColor: Colors.purple.dark,
-  },
-  avatarOptionEmoji: { fontSize: 24 },
   input: {
     backgroundColor: Colors.surface.input,
     borderRadius: Clay.radius.sm,
@@ -199,6 +204,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     flexDirection: 'row',
+    width: '100%',
     backgroundColor: Colors.purple.mid,
     borderRadius: Clay.radius.lg,
     paddingVertical: 14,
