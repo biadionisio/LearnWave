@@ -17,12 +17,35 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
 
-  function handleLogin() {
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function handleLogin() {
     if (!role || !email || !senha) return;
-    if (role === 'professor') {
-      router.replace('/professor/chat');
-    } else {
-      router.replace('/aluno/chat');
+    setErro('');
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `https://learnwaveback2.onrender.com/api/usuarios/login?email=${encodeURIComponent(email)}&senha=${encodeURIComponent(senha)}`,
+        { method: 'POST' }
+      );
+      if (!res.ok) {
+        setErro('E-mail ou senha inválidos.');
+        return;
+      }
+      const usuario = await res.json();
+      const tipo = usuario.tipo?.toLowerCase();
+      if (tipo === 'professor') {
+        router.replace('/professor/chat');
+      } else if (tipo === 'aluno') {
+        router.replace('/aluno/chat');
+      } else {
+        setErro('Perfil não reconhecido.');
+      }
+    } catch {
+      setErro('Erro de conexão. Verifique se o servidor está rodando.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -102,12 +125,15 @@ export default function LoginScreen() {
             />
           </View>
 
+          {erro ? <Text style={{ color: '#ff6b6b', fontSize: 13, textAlign: 'center' }}>{erro}</Text> : null}
+
           <TouchableOpacity
-            style={[styles.loginBtn, (!role || !email || !senha) && styles.loginBtnDisabled]}
+            style={[styles.loginBtn, (!role || !email || !senha || loading) && styles.loginBtnDisabled]}
             onPress={handleLogin}
             activeOpacity={0.85}
+            disabled={loading}
           >
-            <Text style={styles.loginBtnText}>Entrar</Text>
+            <Text style={styles.loginBtnText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
