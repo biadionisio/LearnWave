@@ -4,7 +4,7 @@ import {
   StyleSheet, Text, TextInput, TouchableOpacity,
   View, FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';\
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Clay } from '@/constants/theme';
 import { conversations, Message } from '@/constants/mock-data';
