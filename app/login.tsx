@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Clay } from '@/constants/theme';
+import { saveSession } from '@/hooks/use-session';
 
 const { width } = Dimensions.get('window');
 
@@ -35,6 +36,7 @@ export default function LoginScreen() {
       }
       const usuario = await res.json();
       const tipo = usuario.tipo?.toLowerCase();
+      await saveSession({ id: usuario.id, nome: usuario.nome, tipo: usuario.tipo, email: usuario.email });
       if (tipo === 'professor') {
         router.replace('/professor/chat');
       } else if (tipo === 'aluno') {

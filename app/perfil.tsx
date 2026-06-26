@@ -7,13 +7,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Colors, Clay } from '@/constants/theme';
+import { useProfile } from '@/hooks/use-profile';
 
 export default function PerfilScreen() {
   const router = useRouter();
   const { role } = useLocalSearchParams<{ role: 'professor' | 'aluno' }>();
 
-  const [nome, setNome] = useState('');
-  const [photo, setPhoto] = useState<string | null>(null);
+  const { nome, setNome, photo, setPhoto, saveProfile } = useProfile();
   const [saved, setSaved] = useState(false);
 
   async function pickImage() {
@@ -28,7 +28,8 @@ export default function PerfilScreen() {
     if (!result.canceled) setPhoto(result.assets[0].uri);
   }
 
-  function handleSave() {
+  async function handleSave() {
+    await saveProfile(nome, photo);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }

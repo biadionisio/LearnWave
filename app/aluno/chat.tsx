@@ -1,13 +1,16 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View, FlatList, Platform } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, FlatList, Platform, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Clay } from '@/constants/theme';
 import { conversations } from '@/constants/mock-data';
+import { useProfile } from '@/hooks/use-profile';
 
 const professores = conversations.filter((c) => c.role === 'professor');
 
 export default function AlunoChatScreen() {
   const router = useRouter();
+  const { nome, photo } = useProfile();
+  const initials = nome.trim() ? nome.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase() : '?';
 
   return (
     <View style={styles.container}>
@@ -55,8 +58,12 @@ export default function AlunoChatScreen() {
           style={styles.tabItem}
           onPress={() => router.push('/perfil?role=aluno')}
         >
-          <Ionicons name="person-outline" size={22} color={Colors.text.muted} />
-          <Text style={styles.tabLabel}>Perfil</Text>
+          {photo ? (
+            <Image source={{ uri: photo }} style={styles.tabAvatar} />
+          ) : (
+            <Ionicons name="person-outline" size={22} color={Colors.text.muted} />
+          )}
+          <Text style={styles.tabLabel}>{nome.trim() ? nome.split(' ')[0] : 'Perfil'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -189,5 +196,10 @@ const styles = StyleSheet.create({
   tabLabelActive: {
     color: Colors.accent,
     fontWeight: '700',
+  },
+  tabAvatar: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
   },
 });
