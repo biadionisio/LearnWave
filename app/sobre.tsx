@@ -22,7 +22,7 @@ export default function SobreScreen() {
             <Text style={styles.logoBadgeText}>LW</Text>
           </View>
           <Text style={styles.heroTitle}>LearnWave</Text>
-          <Text style={styles.heroSub}>Versão 1.0.0</Text>
+          <Text style={styles.heroSub}>Assistente de Estudos de Português </Text>
         </View>
 
         <View style={styles.card}>
