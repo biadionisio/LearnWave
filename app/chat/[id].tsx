@@ -8,13 +8,11 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, Clay } from '@/constants/theme';
 import { useSession } from '@/hooks/use-session';
+import { encrypt, decrypt } from '@/utils/crypto';
 
 const API = 'https://learnwaveback2.onrender.com/api';
 const POLL_MS = 3000;
 
-// status: 'enviado' → chegou no storage local
-//         'entregue' → o outro lado já tem no storage (chave simétrica existe)
-//         'lido'    → o outro lado abriu o chat e marcou como lido
 type Status = 'enviado' | 'entregue' | 'lido';
 type Msg = { id: string; senderId: number; text: string; time: string; status: Status };
 
@@ -23,13 +21,12 @@ function storageKey(meId: number, outroId: string) {
   return `@chat_${pair}`;
 }
 
-// chave que o outro lado grava quando abre o chat, com timestamp do último msg lido
 function readKey(leitorId: number, outroId: string) {
   const pair = [String(leitorId), outroId].sort().join('_');
   return `@read_${pair}_by_${leitorId}`;
 }
 
-async function loadMsgs(key: string): Promise<Msg[]> {
+async function loadMsgs(key: string, meId: number, outroId: string): Promise<Msg[]> {
   const raw = await AsyncStorage.getItem(key);
   if (!raw) return [];
   const parsed: any[] = JSON.parse(raw);
@@ -37,32 +34,34 @@ async function loadMsgs(key: string): Promise<Msg[]> {
     await AsyncStorage.removeItem(key);
     return [];
   }
-  // garante que toda mensagem antiga tem status
-  return parsed.map(m => ({ status: 'entregue' as Status, ...m }));
+  const msgs = parsed.map(m => ({
+    status: 'entregue' as Status,
+    ...m,
+    text: decrypt(m.text, meId, outroId),
+  }));
+  // Remove mensagens com IDs temporários (Date.now = 13 dígitos) — não são confiáveis
+  return msgs.filter(m => m.id.length <= 10);
 }
 
-async function saveMsgs(key: string, msgs: Msg[]) {
-  await AsyncStorage.setItem(key, JSON.stringify(msgs));
+async function saveMsgs(key: string, msgs: Msg[], meId: number, outroId: string) {
+  const toStore = msgs.map(m => ({ ...m, text: encrypt(m.text, meId, outroId) }));
+  await AsyncStorage.setItem(key, JSON.stringify(toStore));
 }
 
 function initials(name: string) {
   return name.trim().split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
-// Componente de tick de status (só aparece nas minhas mensagens)
 function StatusTick({ status }: { status: Status }) {
-  if (status === 'enviado') {
+  if (status === 'enviado')
     return <Ionicons name="checkmark" size={12} color={Colors.text.muted} />;
-  }
-  if (status === 'entregue') {
+  if (status === 'entregue')
     return (
       <View style={tickStyles.row}>
         <Ionicons name="checkmark" size={12} color={Colors.text.muted} />
         <Ionicons name="checkmark" size={12} color={Colors.text.muted} style={tickStyles.second} />
       </View>
     );
-  }
-  // lido — duplo roxo
   return (
     <View style={tickStyles.row}>
       <Ionicons name="checkmark" size={12} color={Colors.accent} />
@@ -90,50 +89,48 @@ export default function ChatScreen() {
   const [outroNome, setOutroNome] = useState(decodeURIComponent(nomeOutro ?? ''));
   const [outroFoto, setOutroFoto] = useState<string | null>(null);
   const flatRef = useRef<FlatList>(null);
-  const latestIdRef = useRef<string | null>(null);
+  const latestIdRef = useRef<number>(0);
   const keyRef = useRef<string>('');
   const outroIdNum = parseInt(outroId, 10);
 
+  // Carrega histórico local + dados do outro usuário
   useEffect(() => {
     if (!session) return;
     keyRef.current = storageKey(session.id, outroId);
 
-    // Carrega mensagens salvas
-    loadMsgs(keyRef.current).then((saved) => {
-      setMessages(saved);
-      if (saved.length) latestIdRef.current = saved[saved.length - 1].id;
+    loadMsgs(keyRef.current, session.id, outroId).then((saved) => {
+      // IDs temporários (Date.now, 13 dígitos) não são IDs reais do banco — ignora
+      const realMsgs = saved.filter(m => m.id.length <= 10);
+      setMessages(realMsgs);
+      if (realMsgs.length) latestIdRef.current = Math.max(...realMsgs.map(m => parseInt(m.id, 10)));
     });
 
-    // Carrega dados do outro usuário
-    fetch(`${API}/usuarios/${outroId}`)
+    fetch(`${API}/usuarios/${outroIdNum}`)
       .then(r => r.json())
-      .then((outro: any) => {
-        if (!outro?.id) return;
-        if (!outroNome) setOutroNome(outro.nome);
-        if (outro.fotoPerfil) setOutroFoto(outro.fotoPerfil);
+      .then((u: any) => {
+        if (!outroNome && u.nome) setOutroNome(u.nome);
+        if (u.fotoPerfil) setOutroFoto(u.fotoPerfil);
       })
       .catch(() => {});
   }, [session?.id, outroId]);
 
-  // Marca "lido até agora" quando o usuário abre o chat
+  // Marca lido ao abrir
   useEffect(() => {
     if (!session) return;
-    const key = readKey(session.id, outroId);
-    AsyncStorage.setItem(key, Date.now().toString());
-  }, [session, outroId]);
+    AsyncStorage.setItem(readKey(session.id, outroId), Date.now().toString());
+  }, [session?.id, outroId]);
 
   // Rola para o fim
   useEffect(() => {
-    if (messages.length) {
+    if (messages.length)
       setTimeout(() => flatRef.current?.scrollToEnd({ animated: true }), 80);
-    }
   }, [messages.length]);
 
-  // Polling: atualiza status das mensagens enviadas por mim + busca novas da API
+  // Polling: busca mensagens novas da API
   const pollMessages = useCallback(async () => {
     if (!session || !keyRef.current) return;
 
-    // 1. Verifica se o outro lado leu (lê a chave de leitura do outro)
+    // Atualiza status de leitura (lógica local)
     const rKey = readKey(outroIdNum, outroId);
     const readAtRaw = await AsyncStorage.getItem(rKey);
     const readAt = readAtRaw ? parseInt(readAtRaw, 10) : 0;
@@ -141,82 +138,66 @@ export default function ChatScreen() {
     setMessages(prev => {
       let changed = false;
       const updated = prev.map(m => {
-        if (m.senderId !== session.id) return m; // só atualizo minhas mensagens
-        const msgTs = parseInt(m.id, 10); // id = Date.now() → timestamp
+        if (m.senderId !== session.id) return m;
+        const msgTs = parseInt(m.id, 10);
         let newStatus: Status = m.status;
-
-        if (readAt >= msgTs && m.status !== 'lido') {
-          newStatus = 'lido';
-          changed = true;
-        } else if (m.status === 'enviado') {
-          // Considera entregue após 1 ciclo de polling
-          newStatus = 'entregue';
-          changed = true;
-        }
+        if (readAt >= msgTs && m.status !== 'lido') { newStatus = 'lido'; changed = true; }
+        else if (m.status === 'enviado') { newStatus = 'entregue'; changed = true; }
         return newStatus !== m.status ? { ...m, status: newStatus } : m;
       });
       if (changed) {
-        saveMsgs(keyRef.current, updated);
+        saveMsgs(keyRef.current, updated, session.id, outroId);
         return updated;
       }
       return prev;
     });
 
-    // 2. Busca novas mensagens da API
+    // Busca mensagens da API real — passa os dois IDs, o back retorna ambos os lados
     try {
       const res = await fetch(
         `${API}/chat/mensagens?remetenteId=${session.id}&destinatarioId=${outroId}`
       );
       if (!res.ok) return;
-      const todas: { id: number; remetenteId: number; destinatarioId: number; texto: string; enviadaEm: string }[] = await res.json();
-      if (!todas.length) return;
 
-      const lastId = latestIdRef.current ? parseInt(latestIdRef.current, 10) : 0;
-      const novos = todas.filter(m => m.id > lastId);
-      if (!novos.length) return;
+      const todas: { id: number; remetenteId: number; destinatarioId: number; texto: string; dataEnvio: string }[] =
+        await res.json();
 
-      const mapped: Msg[] = novos.map(m => ({
+      // Filtra apenas as mais novas que já temos
+      const novas = todas.filter(m => m.id > latestIdRef.current);
+      if (!novas.length) return;
+
+      const mapped: Msg[] = novas.map(m => ({
         id: String(m.id),
         senderId: m.remetenteId,
         text: m.texto,
-        time: new Date(m.enviadaEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        time: new Date(m.dataEnvio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         status: m.remetenteId === session.id ? 'entregue' : 'lido',
       }));
 
       setMessages(prev => {
         const existingIds = new Set(prev.filter(m => !m.id.startsWith('tmp_')).map(m => m.id));
-        const novas = mapped.filter(m => !existingIds.has(m.id));
-        if (!novas.length) return prev;
+        const filtradas = mapped.filter(m => !existingIds.has(m.id));
+        if (!filtradas.length) return prev;
         // Remove temporários e adiciona os reais
         const semTmp = prev.filter(m => !m.id.startsWith('tmp_'));
-        const result = [...semTmp, ...novas].sort((a, b) => parseInt(a.id) - parseInt(b.id));
-        saveMsgs(keyRef.current, result);
-        latestIdRef.current = String(result[result.length - 1].id);
+        const result = [...semTmp, ...filtradas];
+        saveMsgs(keyRef.current, result, session.id, outroId);
+        latestIdRef.current = Math.max(...result.map(m => parseInt(m.id, 10)));
         return result;
       });
     } catch { /* sem conexão */ }
   }, [session, outroId, outroIdNum]);
 
   useEffect(() => {
+    // Busca imediata ao abrir
+    pollMessages();
     const interval = setInterval(pollMessages, POLL_MS);
     return () => clearInterval(interval);
   }, [pollMessages]);
 
   async function sendMessage() {
     if (!text.trim() || !session) return;
-    const newMsg: Msg = {
-      id: `tmp_${Date.now()}`,
-      senderId: session.id,
-      text: text.trim(),
-      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-      status: 'enviado',
-    };
-
-    setMessages(prev => {
-      const updated = [...prev, newMsg];
-      saveMsgs(keyRef.current, updated);
-      return updated;
-    });
+    const msgText = text.trim();
     setText('');
 
     try {
@@ -226,22 +207,47 @@ export default function ChatScreen() {
         body: JSON.stringify({
           remetenteId: session.id,
           destinatarioId: outroIdNum,
-          texto: newMsg.text,
+          texto: msgText,
         }),
       });
+
       if (res.ok) {
-        const saved = await res.json();
-        // Substitui o tmp pelo ID real do banco
+        const saved: { id: number; remetenteId: number; destinatarioId: number; texto: string; dataEnvio: string } =
+          await res.json();
+        const newMsg: Msg = {
+          id: String(saved.id),
+          senderId: session.id,
+          text: msgText,
+          time: new Date(saved.dataEnvio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          status: 'enviado',
+        };
         setMessages(prev => {
-          const updated = prev.map(m =>
-            m.id === newMsg.id ? { ...m, id: String(saved.id), status: 'entregue' as Status } : m
-          );
-          saveMsgs(keyRef.current, updated);
-          latestIdRef.current = String(saved.id);
+          const updated = [...prev, newMsg];
+          saveMsgs(keyRef.current, updated, session.id, outroId);
+          latestIdRef.current = saved.id;
           return updated;
         });
+      } else {
+        // API retornou erro — mostra na tela sem persistir (será re-sincronizado pelo poll)
+        const newMsg: Msg = {
+          id: `tmp_${Date.now()}`,
+          senderId: session.id,
+          text: msgText,
+          time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+          status: 'enviado',
+        };
+        setMessages(prev => [...prev, newMsg]);
       }
-    } catch { /* sem conexão */ }
+    } catch {
+      const newMsg: Msg = {
+        id: `tmp_${Date.now()}`,
+        senderId: session.id,
+        text: msgText,
+        time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: 'enviado',
+      };
+      setMessages(prev => [...prev, newMsg]);
+    }
   }
 
   return (
@@ -304,6 +310,7 @@ export default function ChatScreen() {
           value={text}
           onChangeText={setText}
           multiline
+          onSubmitEditing={sendMessage}
         />
         <TouchableOpacity
           style={[styles.sendBtn, !text.trim() && styles.sendBtnDisabled]}
