@@ -104,21 +104,11 @@ export default function ChatScreen() {
       if (saved.length) latestIdRef.current = saved[saved.length - 1].id;
     });
 
-    // Valida par professor<->aluno e carrega dados do outro
-    const meuTipo = session.tipo.toLowerCase();
-    fetch(`${API}/usuarios`)
+    // Carrega dados do outro usuário
+    fetch(`${API}/usuarios/${outroId}`)
       .then(r => r.json())
-      .then((todos: any[]) => {
-        const outro = todos.find(u => String(u.id) === String(outroId));
-        if (!outro) { router.replace('/'); return; }
-        const outroTipo = outro.tipo.toLowerCase();
-        const valido =
-          (meuTipo === 'professor' && outroTipo === 'aluno') ||
-          (meuTipo === 'aluno' && outroTipo === 'professor');
-        if (!valido) {
-          router.replace(meuTipo === 'professor' ? '/professor/chat' : '/aluno/chat');
-          return;
-        }
+      .then((outro: any) => {
+        if (!outro?.id) return;
         if (!outroNome) setOutroNome(outro.nome);
         if (outro.fotoPerfil) setOutroFoto(outro.fotoPerfil);
       })
@@ -172,30 +162,36 @@ export default function ChatScreen() {
       return prev;
     });
 
-    // 2. Busca novas mensagens da API (quando a rota existir)
+    // 2. Busca novas mensagens da API
     try {
       const res = await fetch(
-        `${API}/conversas/${session.id}/${outroId}/mensagens?apos=${latestIdRef.current ?? ''}`
+        `${API}/chat/mensagens?remetenteId=${session.id}&destinatarioId=${outroId}`
       );
       if (!res.ok) return;
-      const novos: { id: string; remetenteId: number; conteudo: string; enviadaEm: string }[] = await res.json();
+      const todas: { id: number; remetenteId: number; destinatarioId: number; texto: string; enviadaEm: string }[] = await res.json();
+      if (!todas.length) return;
+
+      const lastId = latestIdRef.current ? parseInt(latestIdRef.current, 10) : 0;
+      const novos = todas.filter(m => m.id > lastId);
       if (!novos.length) return;
 
       const mapped: Msg[] = novos.map(m => ({
-        id: m.id,
+        id: String(m.id),
         senderId: m.remetenteId,
-        text: m.conteudo,
+        text: m.texto,
         time: new Date(m.enviadaEm).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         status: m.remetenteId === session.id ? 'entregue' : 'lido',
       }));
 
       setMessages(prev => {
-        const existingIds = new Set(prev.map(m => m.id));
+        const existingIds = new Set(prev.filter(m => !m.id.startsWith('tmp_')).map(m => m.id));
         const novas = mapped.filter(m => !existingIds.has(m.id));
         if (!novas.length) return prev;
-        const result = [...prev, ...novas];
+        // Remove temporários e adiciona os reais
+        const semTmp = prev.filter(m => !m.id.startsWith('tmp_'));
+        const result = [...semTmp, ...novas].sort((a, b) => parseInt(a.id) - parseInt(b.id));
         saveMsgs(keyRef.current, result);
-        latestIdRef.current = result[result.length - 1].id;
+        latestIdRef.current = String(result[result.length - 1].id);
         return result;
       });
     } catch { /* sem conexão */ }
@@ -209,7 +205,7 @@ export default function ChatScreen() {
   async function sendMessage() {
     if (!text.trim() || !session) return;
     const newMsg: Msg = {
-      id: Date.now().toString(),
+      id: `tmp_${Date.now()}`,
       senderId: session.id,
       text: text.trim(),
       time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -219,17 +215,32 @@ export default function ChatScreen() {
     setMessages(prev => {
       const updated = [...prev, newMsg];
       saveMsgs(keyRef.current, updated);
-      latestIdRef.current = newMsg.id;
       return updated;
     });
     setText('');
 
     try {
-      await fetch(`${API}/conversas/${session.id}/${outroId}/mensagens`, {
+      const res = await fetch(`${API}/chat/mensagens`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ remetenteId: session.id, conteudo: newMsg.text }),
+        body: JSON.stringify({
+          remetenteId: session.id,
+          destinatarioId: outroIdNum,
+          texto: newMsg.text,
+        }),
       });
+      if (res.ok) {
+        const saved = await res.json();
+        // Substitui o tmp pelo ID real do banco
+        setMessages(prev => {
+          const updated = prev.map(m =>
+            m.id === newMsg.id ? { ...m, id: String(saved.id), status: 'entregue' as Status } : m
+          );
+          saveMsgs(keyRef.current, updated);
+          latestIdRef.current = String(saved.id);
+          return updated;
+        });
+      }
     } catch { /* sem conexão */ }
   }
 
