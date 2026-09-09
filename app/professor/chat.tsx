@@ -35,10 +35,10 @@ export default function ProfessorChatScreen() {
 
   const carregar = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/usuarios`);
+      const res = await fetch(`${API}/usuarios/tipo/ALUNO`);
       const todos: any[] = await res.json();
       setAlunos(
-        todos.filter(u => u.tipo === 'ALUNO' && u.status === 'ativo')
+        todos.filter(u => u.status === 'ativo')
              .map(u => ({ id: u.id, nome: u.nome, fotoPerfil: u.fotoPerfil }))
       );
     } catch { /* sem conexão */ } finally {
@@ -97,7 +97,18 @@ export default function ProfessorChatScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push(`/chat/${item.id}?role=professor&nomeOutro=${encodeURIComponent(item.nome)}`)}
+              onPress={async () => {
+                if (session) {
+                  try {
+                    await fetch(`${API}/chat/vinculos`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ professorId: session.id, alunoId: item.id }),
+                    });
+                  } catch { /* ignora erro de rede */ }
+                }
+                router.push(`/chat/${item.id}?role=professor&nomeOutro=${encodeURIComponent(item.nome)}`);
+              }}
               activeOpacity={0.85}
             >
               <View style={styles.avatar}>
